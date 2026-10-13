@@ -4,82 +4,131 @@ section .data
     bskey equ 0x7F
     lencadena equ 255
     ln equ 0x0A
-    ;nline db ln,0
     msg1 db ln,'Captura: ', 0
-    msg2 db ln,'Cadena: ', 0
-    longitud db 0
+    msg2 db ln,'Minusculas: ', 0
+    msg3 db ln,'Mayusculas: ', 0
     
 section .bss
-    new_line resb 1 ; reservamos 1 byte (255 espacios de carácteres) para nuestra nueva cadena
+    cadena resb lencadena
 
 section .text
     global _start         ; referencia para inicio de programa
     
 _start:   
-    mov byte [new_line], ln
-    ; --- IMPRIMIR CADENA  ---
-    mov edx, msg1        
+    mov edx, msg1
     call puts   
-    call captura    
+    mov edx, cadena
+    mov ax, lencadena
+    call captura
+
     jmp .fin_programa  
     
     ; --- FIN DE PROGRAMA ---
     .fin_programa: 
         mov edx, msg2
-        call puts    
-        mov edx, new_line
-        call puts     
+        call puts
+        mov edx, cadena
+        call minusculas
+        mov edx, cadena
+        call puts
+
+        mov edx, msg3
+        call puts
+        mov edx, cadena
+        call mayusculas
+        mov edx, cadena
+        call puts
 
         mov eax, 1            ; Llamada sys_exit
 	xor ebx, ebx          ; return 0
         int 0x80              ; Fin de programa
 
     captura:
-        push ax
+        push ecx
+        push esi
+        push edi
+        mov esi, edx
+        mov di, ax
+        cmp di, 1
+        jb .fin_captura
+        dec di
+        xor ecx, ecx
 
-    .leer_tecla:   
-        call getch 
-        cmp al, bskey 
-        jne .cantidad_max
-        call borrar 
+    .leer_tecla:
+        call getch
+        cmp al, ln
+        je .fin_linea
+        cmp al, bskey
+        je .borrar
+        cmp cx, di
+        jae .leer_tecla
+        mov [esi + ecx], al
+        inc ecx
+        call putchar
         jmp .leer_tecla
 
-    .cantidad_max:
-        cmp byte [longitud], lencadena
-        jne .enter
-        mov al, 0
+    .borrar:
+        test ecx, ecx
+        jz .leer_tecla
+        dec ecx
+        mov byte [esi + ecx], 0
+        mov al, 0x08
         call putchar
-        jmp .fin_captura
-
-    .enter:     
-        cmp al, ln 
-        jne .sig
+        mov al, ' '
         call putchar
-        mov al, 0
+        mov al, 0x08
         call putchar
-        jmp .fin_captura
-
-    .sig:   
-        call putchar
-        inc byte [longitud]
         jmp .leer_tecla
+
+    .fin_linea:
+        mov byte [esi + ecx], 0
+        mov al, ln
+        call putchar
 
     .fin_captura:
-        pop ax
+        pop edi
+        pop esi
+        pop ecx
         ret
 
-    borrar: 
-        push ax 
-        cmp byte [longitud], 1
-        jb .fin_borrar
-        dec byte [longitud]
-        mov al,0x8
-        call putchar    
-        mov al,' '
-        call putchar
-        mov al,0x8
-        call putchar
+    mayusculas:
+        push esi
+        mov esi, edx
 
-    .fin_borrar:   
-        pop ax
-        ret 
+    .recorrer_mayusculas:
+        cmp byte [esi], 0
+        je .fin_mayusculas
+        cmp byte [esi], 'a'
+        jb .siguiente_mayuscula
+        cmp byte [esi], 'z'
+        ja .siguiente_mayuscula
+        sub byte [esi], 32
+
+    .siguiente_mayuscula:
+        inc esi
+        jmp .recorrer_mayusculas
+
+    .fin_mayusculas:
+        pop esi
+        ret
+
+    minusculas:
+        push esi
+        mov esi, edx
+
+    .recorrer_minusculas:
+        cmp byte [esi], 0
+        je .fin_minusculas
+        cmp byte [esi], 'A'
+        jb .siguiente_minuscula
+        cmp byte [esi], 'Z'
+        ja .siguiente_minuscula
+        add byte [esi], 32
+
+    .siguiente_minuscula:
+        inc esi
+        jmp .recorrer_minusculas
+
+    .fin_minusculas:
+        pop esi
+        ret
