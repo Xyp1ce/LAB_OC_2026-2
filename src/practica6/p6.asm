@@ -21,7 +21,7 @@ _start:
     mov ax, lencadena
     call captura
 
-    jmp .fin_programa  
+    ;jmp .fin_programa  
     
     ; --- FIN DE PROGRAMA ---
     .fin_programa: 
