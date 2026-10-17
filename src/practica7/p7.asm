@@ -52,6 +52,15 @@ _ATOI: ; Array TO Integer
     call _Actualizar_direccion_cadena
     mov edx, [dir_cadena_actualizada]
 
+    mov edx, debug_cadena
+    call puts
+    mov edx, cadena
+    call puts
+    mov edx, debug_direccion_actualizada
+    call puts
+    mov edx, [dir_cadena_actualizada]
+    call puts
+
     mov al, byte [edx]
     cmp al, 0
     je .final
@@ -63,14 +72,6 @@ _ATOI: ; Array TO Integer
         mov edi, [entero]
         add [sum_enteros], edi
 
-        mov edx, debug_cadena
-        call puts
-        mov edx, cadena
-        call puts
-        mov edx, debug_direccion_actualizada
-        call puts
-        mov edx, [dir_cadena_actualizada]
-        call puts
         mov edx, debug_base
         call puts
         movzx eax, byte [base]
