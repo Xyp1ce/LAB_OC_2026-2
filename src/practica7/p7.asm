@@ -48,11 +48,16 @@ _ATOI: ; Array TO Integer
 
     ; estas solo se llaman una vez
     call _Caputar_Cadena
+
     call _Actualizar_direccion_cadena
     mov edx, [dir_cadena_actualizada]
-    call _Encontrar_Base
+
+    mov al, byte [edx]
+    cmp al, 0
+    je .final
 
     .iterar:
+        call _Encontrar_Base
         call _Comparar_numeros
         call _Calcular_entero
         mov edi, [entero]
@@ -68,20 +73,23 @@ _ATOI: ; Array TO Integer
         call puts
         mov edx, debug_base
         call puts
-        mov al, [base]
+        movzx eax, byte [base]
         call _Mostrar_byte
         mov edx, debug_numero
         call puts
-        mov al, [numero]
+        movzx eax, byte [numero]
         call _Mostrar_byte
         mov edx, debug_entero
         call puts
-        mov al, [sum_enteros]
+        mov eax, [sum_enteros]
         call _Mostrar_byte
         mov al, ln 
         call putchar
 
+        mov edx, [dir_cadena_actualizada]
         inc edx 
+        mov [dir_cadena_actualizada], edx
+
         cmp byte [edx], '0'
         jb .final 
         cmp byte [edx], '9'
@@ -89,10 +97,6 @@ _ATOI: ; Array TO Integer
         jmp .iterar
 
     .final:
-        mov al, [sum_enteros]
-        call _Mostrar_byte
-        mov al, ln 
-        call putchar
         pop esi
         pop ebx
         pop ecx
@@ -283,7 +287,6 @@ _Mostrar_byte:
     push ebx
     push ecx
     push edx
-    movzx eax, al
     xor ecx, ecx
 
     .convertir:
