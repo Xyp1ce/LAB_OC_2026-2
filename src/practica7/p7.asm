@@ -7,14 +7,19 @@ section .data
     longitud db 0
     msg db ln, 'Captura: ', 0
     debug_cadena db ln, 'Cadena: ', 0
+    debug_direccion_actualizada db ln, 'Nueva cadena: ', 0
     debug_base db ln, 'Base: ', 0
     debug_numero db ln, 'Numero: ', 0
+    debug_entero db ln, 'Entero: ', 0
+    diez db 10
 
 section .bss
     cadena resb lencadena
+    dir_cadena_actualizada resd 1
     base resb 1
     numero resb 1
-    entero resb 1
+    entero resd 1
+    sum_enteros resd 1
 
 section .text
     global _start
@@ -24,6 +29,9 @@ _start:
     ; ebx = numero = número entero sobre el cual operar 
     ; esi = base = base máxima del arreglo 
 
+    mov edx, cadena
+    mov esi, base
+    mov eax, numero 
     call _ATOI
 
     ; Finalización del programa
@@ -32,45 +40,113 @@ _start:
     int 0x80
 
 _ATOI: ; Array TO Integer
+    push eax
     push edx
-    push esi
+    push ecx
     push ebx
-
-    mov edx, cadena
-    mov esi, base
-
-    call _Caputar_Cadena
-    call _Encontrar_Base
-    call _Comparar_numeros
-
-    mov edx, debug_cadena
-    call puts
-    mov edx, cadena
-    call puts
-    mov edx, debug_base
-    call puts
-    mov al, [base]
-    call _Mostrar_byte
-    mov edx, debug_numero
-    call puts
-    mov al, [numero]
-    call _Mostrar_byte
-    mov al, ln
-    call putchar
-
-    pop ebx
-    pop esi
-    pop edx
-    ret 
-
-_Potencia:
-    push ebx 
     push esi
 
-    cmp esi
+    ; estas solo se llaman una vez
+    call _Caputar_Cadena
+    call _Actualizar_direccion_cadena
+    mov edx, [dir_cadena_actualizada]
+    call _Encontrar_Base
+
+    .iterar:
+        call _Comparar_numeros
+        call _Calcular_entero
+        mov edi, [entero]
+        add [sum_enteros], edi
+
+        mov edx, debug_cadena
+        call puts
+        mov edx, cadena
+        call puts
+        mov edx, debug_direccion_actualizada
+        call puts
+        mov edx, [dir_cadena_actualizada]
+        call puts
+        mov edx, debug_base
+        call puts
+        mov al, [base]
+        call _Mostrar_byte
+        mov edx, debug_numero
+        call puts
+        mov al, [numero]
+        call _Mostrar_byte
+        mov edx, debug_entero
+        call puts
+        mov al, [sum_enteros]
+        call _Mostrar_byte
+        mov al, ln 
+        call putchar
+
+        inc edx 
+        cmp byte [edx], '0'
+        jb .final 
+        cmp byte [edx], '9'
+        ja .final 
+        jmp .iterar
+
+    .final:
+        mov al, [sum_enteros]
+        call _Mostrar_byte
+        mov al, ln 
+        call putchar
+        pop esi
+        pop ebx
+        pop ecx
+        pop edx
+        pop eax
+        ret 
+
+_Actualizar_direccion_cadena:
+    push edx
+    mov edx, cadena
+    .actualizar_direccion:
+        cmp byte [edx], 0
+        je .fin_actualizar_direccion
+        cmp byte [edx], '0'
+        jb .siguiente_caracter_direccion
+        cmp byte [edx], '9'
+        ja .siguiente_caracter_direccion
+        jmp .fin_actualizar_direccion
+    
+    .siguiente_caracter_direccion:
+        inc edx
+        jmp .actualizar_direccion
+
+    .fin_actualizar_direccion:
+        mov [dir_cadena_actualizada], edx
+        pop edx
+        ret
+
+_Calcular_entero:
+    push eax ; contiene el número con el que trabajaremos 
+             ; y contendrá el resultado de la multiplicacion
+    push ecx ; contiene la base a utilizar 
+    push esi ; contendrá 10 ^ base
+
+    movzx eax, byte [numero]
+    movzx ecx, byte [base]
+    mov esi, 1
+
+    ; primero calcular 10 ^ base
+    .potencia: 
+        test ecx, ecx
+        jz .multiplicar
+        imul esi, esi, 10
+        loop .potencia 
+
+    ; calcular numero x potencia 
+    ; EAX = AX * SI
+    .multiplicar:
+        imul eax, esi
+        mov [entero], eax
 
     pop esi
-    pop ebx
+    pop ecx
+    pop eax
     ret
 
 _Encontrar_Base: 
@@ -107,6 +183,7 @@ _Encontrar_Base:
         jmp .recorrer_cadena
 
     .finalizar_cuenta:
+        dec byte [esi]
     .finalizar_base:
         pop edx
         pop esi 
@@ -202,7 +279,7 @@ _Caputar_Cadena:
         pop ecx
     ret
 
-    _Mostrar_byte:
+_Mostrar_byte:
     push ebx
     push ecx
     push edx
