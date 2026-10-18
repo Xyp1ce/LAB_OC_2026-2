@@ -10,8 +10,10 @@ section .data
     debug_direccion_actualizada db ln, 'Nueva cadena: ', 0
     debug_base db ln, 'Base: ', 0
     debug_numero db ln, 'Numero: ', 0
+    debug_signo db ln, 'Signo: ', 0
     debug_entero db ln, 'Entero: ', 0
     diez db 10
+    negative db 0
 
 section .bss
     cadena resb lencadena
@@ -40,7 +42,7 @@ _start:
     int 0x80
 
 _ATOI: ; Array TO Integer
-    push eax
+    mov dword [sum_enteros], 0
     push edx
     push ecx
     push ebx
@@ -48,6 +50,15 @@ _ATOI: ; Array TO Integer
 
     ; estas solo se llaman una vez
     call _Caputar_Cadena
+    mov byte [negative], 0
+    call _Buscar_negativo
+    mov edx, debug_signo
+    call puts
+    mov al, [negative]
+    add al, '0'
+    call putchar
+    mov al, ln 
+    call putchar
 
     call _Actualizar_direccion_cadena
     mov edx, [dir_cadena_actualizada]
@@ -98,12 +109,52 @@ _ATOI: ; Array TO Integer
         jmp .iterar
 
     .final:
+        cmp byte [negative], 1
+        jne .mostrar_positivo
+        neg dword [sum_enteros] ; Solo lo negamos en memoria si realmente es negativo
+
+        mov al, ln
+        call putchar
+        mov al, '-'
+        call putchar
+        mov eax, [sum_enteros]
+        neg eax                 ; Lo pasamos a positivo en EAX para _Mostrar_byte
+        jmp .mostrar_resultado
+
+        .mostrar_positivo:
+            mov al, ln
+            call putchar
+            mov eax, [sum_enteros]
+
+        .mostrar_resultado:
+            call _Mostrar_byte
+        
         pop esi
         pop ebx
         pop ecx
         pop edx
-        pop eax
         ret 
+
+_Buscar_negativo:
+    push edx
+    push ecx
+    mov cl, [negative]
+    .buscar_negativo:
+        cmp byte [edx], 0
+        je .fin_negativo
+        cmp byte [edx], '-'
+        je .negativo
+        inc edx
+        jmp .buscar_negativo 
+
+    .negativo:
+        mov cl, 1
+
+    .fin_negativo:
+        mov byte [negative], cl
+        pop ecx
+        pop edx
+        ret
 
 _Actualizar_direccion_cadena:
     push edx
@@ -224,10 +275,6 @@ _Comparar_numeros:
         pop esi
         pop eax
         ret
-
-_ITOA: ; Integer TO Array
-
-    ret
 
 _Caputar_Cadena:
     mov edx, msg 
