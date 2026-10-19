@@ -349,9 +349,7 @@ _Mostrar_byte:
     .imprimir:
         pop eax
         add al, '0'
-        push ecx
         call putchar
-        pop ecx
         loop .imprimir
 
     pop edx
