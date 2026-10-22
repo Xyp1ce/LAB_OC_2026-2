@@ -86,15 +86,15 @@ _ATOI: ; Array TO Integer
         mov edx, debug_base
         call puts
         movzx eax, byte [base]
-        call _Mostrar_byte
+        call _ITOA
         mov edx, debug_numero
         call puts
         movzx eax, byte [numero]
-        call _Mostrar_byte
+        call _ITOA
         mov edx, debug_entero
         call puts
         mov eax, [sum_enteros]
-        call _Mostrar_byte
+        call _ITOA
         mov al, ln 
         call putchar
 
@@ -127,7 +127,11 @@ _ATOI: ; Array TO Integer
             mov eax, [sum_enteros]
 
         .mostrar_resultado:
-            call _Mostrar_byte
+            sub dword [sum_enteros], 123
+            mov eax, [sum_enteros]
+            call _ITOA
+            mov al, ln
+            call putchar
         
         pop esi
         pop ebx
@@ -331,7 +335,7 @@ _Caputar_Cadena:
         pop ecx
     ret
 
-_Mostrar_byte:
+_ITOA:
     push ebx
     push ecx
     push edx
