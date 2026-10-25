@@ -20,8 +20,6 @@ _start:
     mov edx, cadena
     mov ax, lencadena
     call captura
-
-    ;jmp .fin_programa  
     
     ; --- FIN DE PROGRAMA ---
     .fin_programa: 
