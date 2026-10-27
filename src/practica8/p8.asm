@@ -38,6 +38,9 @@ _start:
         mov edx, cadena
         call puts
 
+        mov al, ln
+        call putchar
+
         mov eax, 1            ; Llamada sys_exit
 	    xor ebx, ebx          ; return 0
         int 0x80              ; Fin de programa
